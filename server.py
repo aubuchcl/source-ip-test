@@ -2,6 +2,9 @@ import os
 import socket
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+class DualStackServer(HTTPServer):
+    address_family = socket.AF_INET6
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
@@ -15,12 +18,11 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
 if __name__ == "__main__":
-    server_address = ('', 8080)  # Bind all available addresses
-    httpd = HTTPServer(server_address, Handler)
+    server_address = ('::', 8080)  # IPv6 wildcard address
+    httpd = DualStackServer(server_address, Handler)
     try:
-        httpd.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        httpd.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)  # allow IPv4
     except (OSError, AttributeError):
-        # Either IPv6 is not available or socket option is not supported
         pass
-    print("Starting server on all interfaces (IPv4/IPv6 where available)...")
+    print("Starting server on [::]:8080 (IPv6 + IPv4 mapped)...")
     httpd.serve_forever()
