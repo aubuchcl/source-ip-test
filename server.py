@@ -15,8 +15,12 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
 if __name__ == "__main__":
-    server_address = ('', 8080)  # Bind to all IPv6 addresses (and IPv4 via dual-stack)
+    server_address = ('', 8080)  # Bind all available addresses
     httpd = HTTPServer(server_address, Handler)
-    httpd.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)  # Allow IPv4-mapped IPv6 addresses
-    print("Starting server on [::]:8080 (IPv4 and IPv6)")
+    try:
+        httpd.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+    except (OSError, AttributeError):
+        # Either IPv6 is not available or socket option is not supported
+        pass
+    print("Starting server on all interfaces (IPv4/IPv6 where available)...")
     httpd.serve_forever()
